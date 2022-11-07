@@ -100,41 +100,67 @@ func parseFatalExpr(file *ast.File) {
 						if cond, ok1 := stmt.(*ast.IfStmt).Cond.(*ast.BinaryExpr); ok1 {
 							x, ok2 := cond.X.(*ast.Ident)
 							y, ok3 := cond.Y.(*ast.Ident)
-							if ok2 && ok3 {
-								// require.NoError
-								if x.Name == "err" && cond.Op == token.NEQ && y.Name == "nil" {
+							if ok3 {
+								if ok2 {
+									// require.NoError
+									if x.Name == "err" && cond.Op == token.NEQ && y.Name == "nil" {
+										newArgs := []ast.Expr{
+											&ast.Ident{
+												Name: "t",
+											},
+											&ast.Ident{
+												Name: "err",
+											},
+										}
+										block.List[i] = getNewFatalSignature(fatalSignature, "NoError", newArgs)
+										continue
+									}
+									// require.Error
+									if x.Name == "err" && cond.Op == token.EQL && y.Name == "nil" {
+										newArgs := []ast.Expr{
+											&ast.Ident{
+												Name: "t",
+											},
+											&ast.Ident{
+												Name: "err",
+											},
+										}
+										block.List[i] = getNewFatalSignature(fatalSignature, "Error", newArgs)
+										continue
+									}
+								}
+
+								// require.Nil
+								if cond.Op == token.NEQ && y.Name == "nil" {
 									newArgs := []ast.Expr{
 										&ast.Ident{
 											Name: "t",
 										},
-										&ast.Ident{
-											Name: "err",
-										},
+										cond.X,
 									}
-									block.List[i] = getNewFatalSignature(fatalSignature, "NoError", newArgs)
+									block.List[i] = getNewFatalSignature(fatalSignature, "Nil", newArgs)
 									continue
 								}
-								// require.Error
-								if x.Name == "err" && cond.Op == token.EQL && y.Name == "nil" {
+								// require.NotNil
+								if cond.Op == token.EQL && y.Name == "nil" {
 									newArgs := []ast.Expr{
 										&ast.Ident{
 											Name: "t",
 										},
-										&ast.Ident{
-											Name: "err",
-										},
+										cond.X,
 									}
-									block.List[i] = getNewFatalSignature(fatalSignature, "Error", newArgs)
+									block.List[i] = getNewFatalSignature(fatalSignature, "NotNil", newArgs)
 									continue
 								}
 							}
+
 							// for some reason this adds a new line after these extraArgs and before the ones copied from Fatalf
 							newArgs := []ast.Expr{
 								&ast.Ident{
 									Name: "t",
 								},
-								cond.X,
 								cond.Y,
+								cond.X,
 							}
 							// require.Equal and require.NotEqual
 							if cond.Op == token.NEQ {
