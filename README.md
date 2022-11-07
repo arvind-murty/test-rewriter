@@ -14,4 +14,6 @@ Comments sometimes get moved inside the new `require` or `assert` statements.
 
 ## TODO
 
+Combine the two commands into one.
+
 Deal with more complicated `if` statements involving `||` and `&&`.
